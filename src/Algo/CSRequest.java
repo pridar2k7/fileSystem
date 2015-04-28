@@ -8,6 +8,13 @@ package Algo;
 public class CSRequest {
     int nodeNumber;
     long sequenceNumber;
+    int objectNumber;
+
+    public CSRequest(int fromNode, long sequenceNumber, int objectNumber) {
+        nodeNumber = fromNode;
+        this.sequenceNumber = sequenceNumber;
+        this.objectNumber = objectNumber;
+    }
 
     public CSRequest(int fromNode, long sequenceNumber) {
         nodeNumber = fromNode;

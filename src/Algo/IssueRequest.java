@@ -41,11 +41,12 @@ class IssueRequest extends Thread {
     private void requestCriticalSection() {
         Nodes.timeStarted = System.currentTimeMillis();
         Nodes.replyList.clear();
-        Nodes.objectToBeAccessed = random.nextInt(7) + 1;
+        Nodes.objectToBeAccessed = random.nextInt(Nodes.TOTAL_SERVERS) + 1;
         for (int nodeNumber = 1; nodeNumber <= Nodes.TOTAL_SERVERS; nodeNumber++) {
             System.out.println("Sending request to " + nodeNumber + " with random value " + Nodes.objectToBeAccessed);
             new Sender().sendRequest(nodeNumber, Nodes.timeStarted, Nodes.objectToBeAccessed);
         }
+        Nodes.isAbortSent = false;
     }
 
 

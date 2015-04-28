@@ -51,6 +51,8 @@ public class Sender {
                     .append(System.currentTimeMillis())
                     .append(" ")
                     .append(Nodes.id)
+                    .append(" ")
+                    .append(Nodes.objectToBeAccessed)
                     .toString();
             System.out.println("release msg "+ requestMessage);
             sender.println(requestMessage);
@@ -110,6 +112,58 @@ public class Sender {
             Nodes.sentMessageCount++;
         } catch (IOException e) {
             System.out.println("Something went wrong in send shutdown");
+        }
+    }
+
+    public void sendWrite(int nodeNumber) {
+        try {
+            sender = new PrintWriter(Nodes.connectedSockets.get(nodeNumber).getOutputStream(), true);
+            String requestMessage = new StringBuilder().append("WRITE ")
+                    .append(Nodes.id)
+                    .append(" ")
+                    .append(Nodes.objectToBeAccessed)
+                    .append("  ")
+                    .append("Message-Time:")
+                    .append(System.currentTimeMillis())
+                    .toString();
+            sender.println(requestMessage);
+            Nodes.sentMessageCount++;
+        } catch (IOException e) {
+            System.out.println("Something went wrong in send write");
+        }
+    }
+
+    public void sendAbortClient(int nodeNumber) {
+        try {
+            sender = new PrintWriter(Nodes.connectedSockets.get(nodeNumber).getOutputStream(), true);
+            String requestMessage = new StringBuilder().append("ABORTCLIENT ")
+                    .append(System.currentTimeMillis())
+                    .append(" ")
+                    .append(Nodes.id)
+                    .append(" ")
+                    .append(Nodes.objectToBeAccessed)
+                    .toString();
+            sender.println(requestMessage);
+            Nodes.sentMessageCount++;
+        } catch (IOException e) {
+            System.out.println("Something went wrong in send abort");
+        }
+    }
+
+    public void sendAbortServer(int nodeNumber, int objectNumber) {
+        try {
+            sender = new PrintWriter(Nodes.connectedSockets.get(nodeNumber).getOutputStream(), true);
+            String requestMessage = new StringBuilder().append("ABORT ")
+                    .append(System.currentTimeMillis())
+                    .append(" ")
+                    .append(Nodes.id)
+                    .append(" ")
+                    .append(objectNumber)
+                    .toString();
+            sender.println(requestMessage);
+            Nodes.sentMessageCount++;
+        } catch (IOException e) {
+            System.out.println("Something went wrong in send abort");
         }
     }
 }

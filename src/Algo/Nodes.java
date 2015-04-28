@@ -16,13 +16,11 @@ public class Nodes {
     protected static int id;
     static protected Map<Integer, Socket> connectedSockets;
     static protected Map<Integer, String> stateMap = new HashMap<Integer, String>();
+    static boolean isAbortSent = false;
 
     public static int objectToBeAccessed=0;
-    public static String state="Unlock";
-    public static int lockedBy=0;
     static ServerTree rootNode;
     static HashMap<Integer, ServerTree> serverMap;
-    static int sequenceNumber =0;
     static Queue<CSRequest> nextInLineQueue;
     static int entryCount=1;
     public static final int TIME_UNIT = 50;
