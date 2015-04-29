@@ -13,6 +13,7 @@ import java.util.*;
 public class Nodes {
     public static final int TOTAL_SERVERS = 3;
     public static final int TOTAL_CLIENTS = 2;
+    public static final int TOTAL_OBJECTS = 2;
     protected static int id;
     static protected Map<Integer, Socket> connectedSockets;
     static protected Map<Integer, String> stateMap = new HashMap<Integer, String>();
@@ -21,7 +22,7 @@ public class Nodes {
     public static int objectToBeAccessed=0;
     static ServerTree rootNode;
     static HashMap<Integer, ServerTree> serverMap;
-    static Queue<CSRequest> nextInLineQueue;
+    static Map<Integer, Queue<CSRequest>> nextInLineQueue;
     static int entryCount=1;
     public static final int TIME_UNIT = 50;
     public static TreeSet<Integer> replyList = new TreeSet<Integer>();;
@@ -29,10 +30,12 @@ public class Nodes {
     public static int totalMessages = 0;
     public static int sentMessageCount = 0;
     public static int receivedMessageCount = 0;
+    public static int writeReplyCount = 0;
+    public static boolean isInCriticalSection = false;
 
 
     public Nodes() {
-        this.nextInLineQueue = new PriorityQueue(10, new QueueComparator());
+        this.nextInLineQueue = new HashMap<Integer, Queue<CSRequest>>();
         this.connectedSockets = new HashMap<Integer, Socket>();
         this.serverMap = new HashMap<Integer, ServerTree>();
     }

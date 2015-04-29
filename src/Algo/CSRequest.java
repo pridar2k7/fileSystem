@@ -33,4 +33,13 @@ public class CSRequest {
 
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "CSRequest{" +
+                "nodeNumber=" + nodeNumber +
+                ", sequenceNumber=" + sequenceNumber +
+                ", objectNumber=" + objectNumber +
+                '}';
+    }
 }

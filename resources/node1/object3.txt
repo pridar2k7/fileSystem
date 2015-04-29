@@ -1,1 +1,16 @@
-Node : 1 
+Node : 1 Message-Time:1430266021023
+Node : 2 Message-Time:1430266021026
+Node : 1 Message-Time:1430266021308
+Node : 1 Message-Time:1430266021607
+Node : 2 Message-Time:1430266021922
+Node : 2 Message-Time:1430266022243
+Node : 1 Message-Time:1430266022285
+Node : 2 Message-Time:1430266023649
+Node : 1 Message-Time:1430266024069
+Node : 1 Message-Time:1430266024463
+Node : 2 Message-Time:1430266024838
+Node : 2 Message-Time:1430266025258
+Node : 2 Message-Time:1430266025691
+Node : 1 Message-Time:1430266026164
+Node : 2 Message-Time:1430266027061
+Node : 2 Message-Time:1430266027542

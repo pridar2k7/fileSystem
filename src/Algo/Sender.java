@@ -67,7 +67,6 @@ public class Sender {
             sender = new PrintWriter((Nodes.connectedSockets.get(nodeNumber)).getOutputStream(), true);
             String requestMessage = new StringBuilder().append("START ")
                     .toString();
-            System.out.println("start msg "+ requestMessage);
             sender.println(requestMessage);
             Nodes.sentMessageCount++;
         } catch (IOException e) {
@@ -81,7 +80,6 @@ public class Sender {
             String requestMessage = new StringBuilder().append("COMPLETE ")
                     .append(Nodes.id)
                     .toString();
-            System.out.println("Complete msg "+ requestMessage);
             sender.println(requestMessage);
             Nodes.sentMessageCount++;
         } catch (IOException e) {
@@ -115,14 +113,28 @@ public class Sender {
         }
     }
 
-    public void sendWrite(int nodeNumber) {
+    public void sendWriteRequest(int nodeNumber) {
+        try {
+            sender = new PrintWriter(Nodes.connectedSockets.get(nodeNumber).getOutputStream(), true);
+            String requestMessage = new StringBuilder().append("WRITEREQUEST ")
+                    .append(Nodes.id)
+                    .append(" ")
+                    .append(Nodes.objectToBeAccessed)
+                    .toString();
+            sender.println(requestMessage);
+            Nodes.sentMessageCount++;
+        } catch (IOException e) {
+            System.out.println("Something went wrong in send write");
+        }
+    }
+ public void sendWrite(int nodeNumber) {
         try {
             sender = new PrintWriter(Nodes.connectedSockets.get(nodeNumber).getOutputStream(), true);
             String requestMessage = new StringBuilder().append("WRITE ")
                     .append(Nodes.id)
                     .append(" ")
                     .append(Nodes.objectToBeAccessed)
-                    .append("  ")
+                    .append(" ")
                     .append("Message-Time:")
                     .append(System.currentTimeMillis())
                     .toString();
@@ -159,6 +171,21 @@ public class Sender {
                     .append(Nodes.id)
                     .append(" ")
                     .append(objectNumber)
+                    .toString();
+            sender.println(requestMessage);
+            Nodes.sentMessageCount++;
+        } catch (IOException e) {
+            System.out.println("Something went wrong in send abort");
+        }
+    }
+
+    public void sendWriteReply(int fromNode, String decision) {
+        try {
+            sender = new PrintWriter(Nodes.connectedSockets.get(fromNode).getOutputStream(), true);
+            String requestMessage = new StringBuilder().append("WRITEREPLY ")
+                    .append(decision)
+                    .append(" ")
+                    .append(Nodes.id)
                     .toString();
             sender.println(requestMessage);
             Nodes.sentMessageCount++;
