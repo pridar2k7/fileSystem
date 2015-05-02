@@ -127,7 +127,7 @@ public class Sender {
             System.out.println("Something went wrong in send write");
         }
     }
- public void sendWrite(int nodeNumber) {
+ public void sendWrite(int nodeNumber, long timeStamp) {
         try {
             sender = new PrintWriter(Nodes.connectedSockets.get(nodeNumber).getOutputStream(), true);
             String requestMessage = new StringBuilder().append("WRITE ")
@@ -136,7 +136,7 @@ public class Sender {
                     .append(Nodes.objectToBeAccessed)
                     .append(" ")
                     .append("Message-Time:")
-                    .append(System.currentTimeMillis())
+                    .append(timeStamp)
                     .toString();
             sender.println(requestMessage);
             Nodes.sentMessageCount++;

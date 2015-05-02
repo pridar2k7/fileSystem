@@ -30,7 +30,6 @@ public class Receiver extends Thread {
         try {
             while (true) {
                 receivedMessage = (String) MessageReader.messageQueue.take();
-                System.out.println("start "+receivedMessage);
                 Nodes.receivedMessageCount++;
 
                 String[] keyWords = receivedMessage.split(" ");
@@ -49,18 +48,12 @@ public class Receiver extends Thread {
                     receiveComplete();
                 } else if (keyWords[0].equals("WRITEREQUEST")) {
                     receiveWriteRequest(Integer.parseInt(keyWords[1]), Integer.parseInt(keyWords[2]));
-                }else if (keyWords[0].equals("WRITEREPLY")) {
-                    receiveWriteReply(keyWords[1], Integer.parseInt(keyWords[2]));
-                }else if (keyWords[0].equals("WRITE")) {
+                } else if (keyWords[0].equals("WRITEREPLY")) {
+                    receiveWriteReply(keyWords[1]);
+                } else if (keyWords[0].equals("WRITE")) {
                     System.out.println("Write received: " + keyWords[1].trim() + " " + keyWords[3].trim());
                     receiveWrite(Integer.parseInt(keyWords[1]), Integer.parseInt(keyWords[2]), keyWords[3]);
-                }
-//                else if (keyWords[0].equals("ABORTCLIENT")) {
-//                    receiveAbort(Integer.parseInt(keyWords[2]), Integer.parseInt(keyWords[3]));
-//                } else if (keyWords[0].equals("ABORT")) {
-//                    unlock(Integer.parseInt(keyWords[2]), Long.parseLong(keyWords[1]), Integer.parseInt(keyWords[3]));
-//                }
-                else if (keyWords[0].equals("SHUTDOWN")) {
+                } else if (keyWords[0].equals("SHUTDOWN")) {
                     System.out.println("System will shutdown now");
                     System.exit(0);
                 }
@@ -84,22 +77,24 @@ public class Receiver extends Thread {
             e.printStackTrace();
         }
     }
-    private void receiveWriteReply(String decision, int fromNode) {
+
+    private void receiveWriteReply(String decision) {
         try {
-            if(decision.equals("YES")){
+            if (decision.equals("YES")) {
                 Nodes.writeReplyCount++;
-                if(Nodes.writeReplyCount == Nodes.TOTAL_OBJECTS){
+                if (Nodes.writeReplyCount == Nodes.TOTAL_OBJECTS) {
+                    long timeStamp = System.currentTimeMillis();
                     List<Integer> objectServers = getObjectServers(Nodes.objectToBeAccessed);
                     for (Integer objectServer : objectServers) {
-                        new Sender().sendWrite(objectServer);
+                        new Sender().sendWrite(objectServer, timeStamp);
                     }
                     Nodes.writeReplyCount = 0;
                     releaseCriticalSection();
                     Nodes.entryCount++;
                     makeRequest();
                 }
-            } else if(decision.equals("ABORT")){
-                if(!Nodes.isAbortSent) {
+            } else if (decision.equals("ABORT")) {
+                if (!Nodes.isAbortSent) {
                     List<Integer> objectServers = getObjectServers(Nodes.objectToBeAccessed);
                     for (Integer objectServer : objectServers) {
                         new Sender().sendAbortServer(objectServer, Nodes.objectToBeAccessed);
@@ -116,21 +111,10 @@ public class Receiver extends Thread {
         }
     }
 
-    private void receiveAbort(int fromNode, int objectNumber) {
-        if (!Nodes.isAbortSent) {
-            for (int nodeNumber = 1; nodeNumber <= Nodes.TOTAL_SERVERS; nodeNumber++) {
-                new Sender().sendAbortServer(nodeNumber, objectNumber);
-            }
-            Nodes.isAbortSent = true;
-            Nodes.entryCount++;
-            makeRequest();
-        }
-    }
-
     private void receiveWrite(int fromNode, int objectNumber, String message) {
         try {
-            System.out.println("receivewrite " + fromNode +  " " + objectNumber + " " + Nodes.id);
-            File resource = new File("resources/node"+String.valueOf(Nodes.id)+"/object" + String.valueOf(objectNumber)+".txt");
+            System.out.println("receivewrite " + fromNode + " " + objectNumber + " " + Nodes.id);
+            File resource = new File("resources/node" + String.valueOf(Nodes.id) + "/object" + String.valueOf(objectNumber) + ".txt");
             if (resource.exists()) {
                 FileOutputStream fos = new FileOutputStream(resource, true);
                 String finalMessage = "Node : " + String.valueOf(fromNode) + " " + message + "\n";
@@ -138,7 +122,7 @@ public class Receiver extends Thread {
             } else {
                 System.out.println("File not found while writing!");
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -172,67 +156,47 @@ public class Receiver extends Thread {
     //if a release is received from x, we see if the node is locked by that node x if so we release it and process next request in queue..
     // if the node is not locked by the node x then if it s already present in the queue then it removes the request as it already entered critical section
     private void unlock(int fromNode, long sequenceNumber, int objectNumber) {
-        System.out.println("statemap"+Nodes.stateMap.toString());
         if ((Nodes.stateMap.containsKey(objectNumber)) && (Nodes.stateMap.get(objectNumber).contains(String.valueOf(fromNode)))) {
             Nodes.stateMap.put(objectNumber, "Unlock");
             if (Nodes.nextInLineQueue.containsKey(objectNumber)) {
                 Queue<CSRequest> csRequests = Nodes.nextInLineQueue.get(objectNumber);
                 CSRequest nextNodeToBeLocked = null;
-                if(csRequests!=null && !csRequests.isEmpty()) {
+                if (csRequests != null && !csRequests.isEmpty()) {
                     nextNodeToBeLocked = csRequests.peek();
                 }
                 if (nextNodeToBeLocked != null) {
-//                    if (!Nodes.stateMap.containsKey(nextNodeToBeLocked.objectNumber)
-//                            || (Nodes.stateMap.get(nextNodeToBeLocked.objectNumber).contains("Unlock"))) {
-                    System.out.println("goingto lock " + nextNodeToBeLocked.nodeNumber + " " + nextNodeToBeLocked.objectNumber);
-                    System.out.println("nilq bfr" + Nodes.nextInLineQueue.toString());
                     lockNode(nextNodeToBeLocked.nodeNumber, nextNodeToBeLocked.objectNumber);
                     csRequests.poll();
                     Nodes.nextInLineQueue.put(objectNumber, csRequests);
-                    System.out.println("nilq aftr" + Nodes.nextInLineQueue.toString());
-//                    }
                 }
             }
         } else {
             Queue<CSRequest> csRequests = Nodes.nextInLineQueue.get(objectNumber);
-            System.out.println("removed status " + csRequests.remove(new CSRequest(fromNode, sequenceNumber, objectNumber)));
+            if (csRequests != null && !csRequests.isEmpty()) {
+                csRequests.remove(new CSRequest(fromNode, sequenceNumber, objectNumber));
+            }
         }
 
     }
 
     //as we get a reply we check if we have got replies from any of the quorums and if so we can enter the critical section
     private void receiveReply(int fromNode) {
-//        if (Nodes.entryCount <= 20) {
-        if(!Nodes.isInCriticalSection) {
+        if (!Nodes.isInCriticalSection) {
             Nodes.replyList.add(fromNode);
             if (checkQuorumFor(Nodes.rootNode.getNodeNumber())) {
                 Nodes.isInCriticalSection = true;
                 enterCriticalSection();
-//                Nodes.entryCount++;
-//                makeRequest();
             }
-//        }
         }
     }
 
     //critical section with 3units of wait time..
     private void enterCriticalSection() {
         try {
-//            System.out.println("Entered Critical section.. " + new Date() + "  " + System.currentTimeMillis() + Nodes.objectToBeAccessed);
-//            Thread.sleep(3 * Nodes.TIME_UNIT);
-//            System.out.println("Exited critical section.." + new Date() + "  " + System.currentTimeMillis() + Nodes.objectToBeAccessed);
-
             List<Integer> objectServers = getObjectServers(Nodes.objectToBeAccessed);
             for (Integer objectServer : objectServers) {
-                System.out.println("display"+objectServer);
                 new Sender().sendWriteRequest(objectServer);
             }
-//            for (int count = 0; count < Nodes.TOTAL_OBJECTS; count++) {
-//                int display = nodeNumber % (Nodes.TOTAL_SERVERS);
-//                System.out.println("display"+display);
-//                new Sender().sendWriteRequest(display);
-//                nodeNumber++;
-//            }
             Nodes.timeEnded = System.currentTimeMillis();
         } catch (Exception e) {
             e.printStackTrace();
@@ -240,11 +204,11 @@ public class Receiver extends Thread {
         }
     }
 
-    private List<Integer> getObjectServers(int objectNumber){
+    private List<Integer> getObjectServers(int objectNumber) {
         List<Integer> objectServerList = new ArrayList<Integer>();
         objectServerList.add(objectNumber);
-        objectServerList.add(((objectNumber + 1) > Nodes.TOTAL_SERVERS)? (objectNumber+1) - (Nodes.TOTAL_SERVERS) : (objectNumber+1));
-//        objectServerList.add(((objectNumber + 2) > Nodes.TOTAL_SERVERS)? (objectNumber+2) - (Nodes.TOTAL_SERVERS) : (objectNumber+2));
+        objectServerList.add(((objectNumber + 1) > Nodes.TOTAL_SERVERS) ? (objectNumber + 1) - (Nodes.TOTAL_SERVERS) : (objectNumber + 1));
+        objectServerList.add(((objectNumber + 2) > Nodes.TOTAL_SERVERS) ? (objectNumber + 2) - (Nodes.TOTAL_SERVERS) : (objectNumber + 2));
         return objectServerList;
     }
 
@@ -275,39 +239,24 @@ public class Receiver extends Thread {
             state = Nodes.stateMap.get(objectToBeAccessed);
             message = state.split(" ");
         }
-        System.out.println("message "+ state);
-        System.out.println("fromNode object to be accessed  "+ fromNode +  " " + objectToBeAccessed);
-        if (message == null) {
-            System.out.println("null");
-            lockNode(fromNode, objectToBeAccessed);
-        } else if (!message[0].equals("Locked")) {
-            System.out.println("locked");
+        if (message == null || (!message[0].equals("Locked"))) {
             lockNode(fromNode, objectToBeAccessed);
         } else {
-            System.out.println(" not locked" + Nodes.nextInLineQueue.toString());
             Queue<CSRequest> csRequests = Nodes.nextInLineQueue.get(objectToBeAccessed);
             CSRequest csRequest = new CSRequest(fromNode, sequenceNumber, objectToBeAccessed);
-            if(csRequests == null){
+            if (csRequests == null) {
                 csRequests = new PriorityQueue<CSRequest>(10, new QueueComparator());
             }
             csRequests.add(csRequest);
             Nodes.nextInLineQueue.put(objectToBeAccessed, csRequests);
-            System.out.println("put" + Nodes.nextInLineQueue.toString());
         }
     }
 
     //we shoudl lock the node
     private void lockNode(int nodeNumber, int objectToBeAccessed) {
         try {
-//            File resource = new File("resources/node" + String.valueOf(nodeNumber) + "/object" + String.valueOf(objectToBeAccessed) + ".txt");
-//            if (resource.exists()) {
-                new Sender().sendReply(nodeNumber);
-                Nodes.stateMap.put(objectToBeAccessed, "Locked " + nodeNumber);
-//            }
-//            else {
-//                System.out.println("File not found while checking!");
-//                new Sender().sendAbortClient(nodeNumber);
-//            }
+            new Sender().sendReply(nodeNumber);
+            Nodes.stateMap.put(objectToBeAccessed, "Locked " + nodeNumber);
         } catch (Exception e) {
             e.printStackTrace();
         }

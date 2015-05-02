@@ -11,9 +11,9 @@ import java.util.*;
  */
 //Class to maintain all the data collection and algorithm related details about the node
 public class Nodes {
-    public static final int TOTAL_SERVERS = 3;
-    public static final int TOTAL_CLIENTS = 2;
-    public static final int TOTAL_OBJECTS = 2;
+    public static final int TOTAL_SERVERS = 7;
+    public static final int TOTAL_CLIENTS = 5;
+    public static final int TOTAL_OBJECTS = 3;
     protected static int id;
     static protected Map<Integer, Socket> connectedSockets;
     static protected Map<Integer, String> stateMap = new HashMap<Integer, String>();
